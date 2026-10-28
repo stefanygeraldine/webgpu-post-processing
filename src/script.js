@@ -3,8 +3,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { Inspector } from 'three/addons/inspector/Inspector.js'
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import {pass, uv, vec2} from 'three/tsl'
 import { bloom } from 'three/addons/tsl/display/BloomNode.js'
-import { pass, uv } from 'three/tsl'
+import {chromaticAberration} from "three/addons/tsl/display/ChromaticAberrationNode.js";
 
 /**
  * Base
@@ -142,6 +143,12 @@ bloomGui.add(bloomParams, 'radius', 0, 1, 0.01).name('radius').onChange((value) 
 })
 
 /**
+ * Chromatic Aberration
+ */
+
+const chromaticAberrationPass = chromaticAberration(renderPipeline.outputNode, 2, vec2(0.5), 1)
+renderPipeline.outputNode = chromaticAberrationPass
+    /**
  * Floor
  */
 {

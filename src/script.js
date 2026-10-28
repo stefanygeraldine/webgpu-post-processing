@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import {pass, uv, vec2} from 'three/tsl'
 import { bloom } from 'three/addons/tsl/display/BloomNode.js'
 import {chromaticAberration} from "three/addons/tsl/display/ChromaticAberrationNode.js";
+import {pixelationPass} from "three/addons/tsl/display/PixelationPassNode.js";
 
 /**
  * Base
@@ -108,6 +109,12 @@ const renderPipeline = new THREE.RenderPipeline(renderer)
  */
 const scenePass = pass(scene, camera)
 
+/**
+ * Pixelation
+ */
+const pixelationPassOutput = pixelationPass(scene, camera, 20, 2, 1)
+renderPipeline.outputNode = pixelationPassOutput
+
 // 2. Extraer el nodo de textura y aplicar el bloom correctamente
 const scenePassColor = scenePass.getTextureNode()
 
@@ -125,7 +132,7 @@ const bloomParams = {
 const bloomPass = bloom(scenePassColor)
 bloomPass.strength = 1
 bloomPass.threshold = 0.25
-renderPipeline.outputNode = scenePass.add(bloomPass)
+renderPipeline.outputNode = renderPipeline.outputNode.add(bloomPass)
 
 // 3. Creamos el GUI usando el objeto plano y actualizamos los nodos con .onChange
 const bloomGui = renderer.inspector.createParameters('Bloom').close()
@@ -148,7 +155,10 @@ bloomGui.add(bloomParams, 'radius', 0, 1, 0.01).name('radius').onChange((value) 
 
 const chromaticAberrationPass = chromaticAberration(renderPipeline.outputNode, 2, vec2(0.5), 1)
 renderPipeline.outputNode = chromaticAberrationPass
-    /**
+
+
+
+/**
  * Floor
  */
 {

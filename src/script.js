@@ -124,7 +124,7 @@ const bloomParams = {
 const bloomPass = bloom(scenePassColor)
 bloomPass.strength = 1
 bloomPass.threshold = 0.25
-renderPipeline.outputNode = bloomPass
+renderPipeline.outputNode = scenePass.add(bloomPass)
 
 // 3. Creamos el GUI usando el objeto plano y actualizamos los nodos con .onChange
 const bloomGui = renderer.inspector.createParameters('Bloom').close()

@@ -109,19 +109,37 @@ const scenePass = pass(scene, camera)
 
 // 2. Extraer el nodo de textura y aplicar el bloom correctamente
 const scenePassColor = scenePass.getTextureNode()
+
+/**
+ * Bloom & Debug
+ */
+// 1. Objeto plano de configuración para el GUI
+const bloomParams = {
+    strength: 1,
+    radius: 0.4,
+    threshold: 0.48
+}
+
+// 2. Pasamos los valores iniciales al bloom
 const bloomPass = bloom(scenePassColor)
 bloomPass.strength = 1
 bloomPass.threshold = 0.25
+renderPipeline.outputNode = bloomPass
 
-// 3. Asignar el bloom al outputNode del pipeline
-renderPipeline.outputNode = scenePass.add(bloomPass)
+// 3. Creamos el GUI usando el objeto plano y actualizamos los nodos con .onChange
+const bloomGui = renderer.inspector.createParameters('Bloom').close()
 
-// Debug
-const postProcessingGui = renderer.inspector.createParameters('Post-processing')
+bloomGui.add(bloomParams, 'threshold', 0, 1, 0.01).name('threshold').onChange((value) => {
+    bloomPass.threshold.value = value
+})
 
-const bloomGui = postProcessingGui.addFolder('bloom')
+bloomGui.add(bloomParams, 'strength', 0, 3, 0.01).name('strength').onChange((value) => {
+    bloomPass.strength.value = value
+})
 
-
+bloomGui.add(bloomParams, 'radius', 0, 1, 0.01).name('radius').onChange((value) => {
+    bloomPass.radius.value = value
+})
 
 /**
  * Floor

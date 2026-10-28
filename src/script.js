@@ -4,7 +4,7 @@ import { Inspector } from 'three/addons/inspector/Inspector.js'
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { bloom } from 'three/addons/tsl/display/BloomNode.js'
-import {pass, uv} from 'three/tsl'
+import { pass, uv } from 'three/tsl'
 
 /**
  * Base
@@ -106,13 +106,22 @@ const renderPipeline = new THREE.RenderPipeline(renderer)
  * Scene pass
  */
 const scenePass = pass(scene, camera)
-renderPipeline.outputNode = scenePass
 
-/**
- * Bloom
- */
-const bloomPass = bloom(renderPipeline.outputNode)
-renderPipeline.outputNode = bloomPass
+// 2. Extraer el nodo de textura y aplicar el bloom correctamente
+const scenePassColor = scenePass.getTextureNode()
+const bloomPass = bloom(scenePassColor)
+bloomPass.strength = 1
+bloomPass.threshold = 0.25
+
+// 3. Asignar el bloom al outputNode del pipeline
+renderPipeline.outputNode = scenePass.add(bloomPass)
+
+// Debug
+const postProcessingGui = renderer.inspector.createParameters('Post-processing')
+
+const bloomGui = postProcessingGui.addFolder('bloom')
+
+
 
 /**
  * Floor
@@ -177,12 +186,12 @@ const skyChanged = () =>
     sky.cloudDensity.value = effectController.cloudDensity
     sky.cloudElevation.value = effectController.cloudElevation
 
-    const phi = THREE.MathUtils.degToRad( 90 - effectController.elevation )
-    const theta = THREE.MathUtils.degToRad( effectController.azimuth )
+    const phi = THREE.MathUtils.degToRad(90 - effectController.elevation)
+    const theta = THREE.MathUtils.degToRad(effectController.azimuth)
 
-    sun.setFromSphericalCoords( 1, phi, theta )
+    sun.setFromSphericalCoords(1, phi, theta)
 
-    sky.sunPosition.value.copy( sun )
+    sky.sunPosition.value.copy(sun)
 }
 
 skyChanged()
@@ -195,7 +204,7 @@ skyGui.add(effectController, 'rayleigh', 0.0, 4, 0.001).onChange(skyChanged)
 skyGui.add(effectController, 'mieCoefficient', 0.0, 0.1, 0.001).onChange(skyChanged)
 skyGui.add(effectController, 'mieDirectionalG', 0.0, 1, 0.001).onChange(skyChanged)
 skyGui.add(effectController, 'elevation', -10, 90, 0.1).onChange(skyChanged)
-skyGui.add(effectController, 'azimuth', - 180, 180, 0.1).onChange(skyChanged)
+skyGui.add(effectController, 'azimuth', -180, 180, 0.1).onChange(skyChanged)
 
 /**
  * Lights
@@ -214,10 +223,8 @@ scene.add(ambientLight)
 
 // Debug
 const lightsGui = renderer.inspector.createParameters('Lights').close()
-
 lightsGui.addColor(directionalLight, 'color').name('directionalColor')
 lightsGui.add(directionalLight, 'intensity', 0, 5, 0.01).name('directionalIntensity')
-
 lightsGui.addColor(ambientLight, 'color').name('ambientColor')
 lightsGui.add(ambientLight, 'intensity', 0, 5, 0.01).name('ambientIntensity')
 
@@ -229,8 +236,8 @@ const tick = () =>
     // Update controls
     controls.update()
 
-    // Render
-    renderer.render(scene, camera)
+    // Render using the pipeline instead of standard renderer.render
+    renderPipeline.render()
 }
 
 renderer.setAnimationLoop(tick)
